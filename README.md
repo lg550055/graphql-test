@@ -1,16 +1,15 @@
 ## graphql-test
 Demo, in-memory, graphql app
 
-### Install and run
+### Install and run local, in-memory demo
 To install, ensure you have `Node.js` and `npm` installed.
 
 Then:
 
 1. Initialize a Node.js project: `npm init -y`
 2. Install dependencies: `npm install apollo-server graphql`
-3. Save the code in `server.js`
-4. Run the server: `node server.js`
-5. You can then access the GraphQL Playground at http://localhost:4000 to test (see *sample
+3. Run the server: `node server-v0.js`
+4. You can then access the GraphQL Playground at http://localhost:4000 to test (see *sample
 operations* below).
 
 ### Sample operations
