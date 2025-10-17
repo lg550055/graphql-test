@@ -96,7 +96,17 @@ const resolvers = {
 };
 
 // Create Apollo Server
-const server = new ApolloServer({ typeDefs, resolvers });
+const server = new ApolloServer({
+  typeDefs,
+  resolvers,
+  formatError: (error) => {
+    console.error(error); // Log errors for debugging
+    return {
+      message: error.message,
+      code: error.extensions?.code || 'INTERNAL_SERVER_ERROR',
+    };
+  },
+});
 
 // Start the server
 server.listen({ port: PORT }).then(({ url }) => {
