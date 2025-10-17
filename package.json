@@ -1,0 +1,25 @@
+{
+  "name": "graphql-test",
+  "version": "1.0.0",
+  "description": "Demo, in-memory, graphql app",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lg550055/graphql-test.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/lg550055/graphql-test/issues"
+  },
+  "homepage": "https://github.com/lg550055/graphql-test#readme",
+  "dependencies": {
+    "apollo-server": "^3.13.0",
+    "graphql": "^16.11.0"
+  }
+}
