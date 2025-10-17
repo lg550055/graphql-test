@@ -45,26 +45,52 @@ const typeDefs = gql`
 // Resolvers using MongoDB
 const resolvers = {
   Query: {
-    books: async () => await Book.find(),
-    book: async (_, { id }) => await Book.findById(id),
+    books: async () => {
+      try {
+        return await Book.find()
+      } catch (error) {
+        throw new Error('Failed to fetch books; ' + error.message);
+      }
+    },
+    book: async (_, { id }) => {
+      try {
+        const book = await Book.findById(id)
+        if (!book) throw new Error('Book not found');
+        return book;
+      } catch (error) {
+        throw new Error('Failed to fetch book; ' + error.message);
+      }
+    },
   },
   Mutation: {
     addBook: async (_, { title, author, year }) => {
-      const book = new Book({ title, author, year });
-      await book.save();
-      return book;
+      try{
+        const book = new Book({ title, author, year });
+        await book.save();
+        return book;
+      } catch (error) {
+        throw new Error('Failed to add book; ' + error.message);
+      }
     },
     updateBook: async (_, { id, title, author, year }) => {
-      const updates = {};
-      if (title) updates.title = title;
-      if (author) updates.author = author;
-      if (year) updates.year = year;
-      const book = await Book.findByIdAndUpdate(id, updates, { new: true });
-      return book;
+      try{
+        const updates = {};
+        if (title) updates.title = title;
+        if (author) updates.author = author;
+        if (year) updates.year = year;
+        const book = await Book.findByIdAndUpdate(id, updates, { new: true });
+        return book;
+      } catch (error) {
+        throw new Error('Failed to update book; ' + error.message);
+      }
     },
     deleteBook: async (_, { id }) => {
-      const result = await Book.findByIdAndDelete(id);
-      return !!result;
+      try {
+        const result = await Book.findByIdAndDelete(id);
+        return !!result;
+      } catch (error) {
+        throw new Error('Failed to delete book; ' + error.message);
+      }
     },
   },
 };
