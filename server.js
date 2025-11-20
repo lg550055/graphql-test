@@ -2,10 +2,9 @@ const { ApolloServer, gql } = require('apollo-server');
 const mongoose = require('mongoose');
 
 require('dotenv').config();
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/bookstore';
+const MONGODB_URI = process.env.MONGODB_URI;
 const PORT = process.env.PORT || 4000;
 
-// Connect to MongoDB
 mongoose.connect(MONGODB_URI, {
   useNewUrlParser: true,
   useUnifiedTopology: true,
@@ -112,3 +111,25 @@ const server = new ApolloServer({
 server.listen({ port: PORT }).then(({ url }) => {
   console.log(`🚀 Server ready at ${url}`);
 });
+
+// Graceful shutdown handler
+const gracefulShutdown = async (signal) => {
+  console.log(`\n${signal} received. Closing server and database connection...`);
+  
+  try {
+    await server.stop();
+    console.log('Apollo Server stopped');
+    
+    await mongoose.connection.close();
+    console.log('MongoDB connection closed');
+    
+    process.exit(0);
+  } catch (error) {
+    console.error('Error during shutdown:', error);
+    process.exit(1);
+  }
+};
+
+// Listen for termination signals
+process.on('SIGINT', () => gracefulShutdown('SIGINT'));
+process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));

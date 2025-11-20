@@ -4,11 +4,15 @@ Demo, in-memory, graphql app
 ### Install and run local, in-memory demo
 To install, ensure you have `Node.js` and `npm` installed.
 
-Then:
+Then execute steps 1 and 2 once to complete local setup:
 
 1. Initialize a Node.js project: `npm init -y`
 2. Install dependencies: `npm install apollo-server graphql`
-3. Run the server: `node server-v0.js`
+
+** If already exeuted steps 1 and 2 before, start here**
+3. Run the server:
+  - local version: `node server-v0.js`
+  - cloud MongoDB version: `node server.js`
 4. You can then access the GraphQL Playground at http://localhost:4000 to test (see *sample
 operations* below).
 
