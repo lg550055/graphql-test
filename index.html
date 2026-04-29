@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>P/E of stocks adding to 50%+ of market</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💰</text></svg>" />
+    <link rel="stylesheet" href="styles.css">
+    <script src="latest.js"></script>
+</head>
+<body>
+    <div class="container">
+        <h1>📈 Fwd p/e of top stocks<br>50%+ market</h1>
+        <p id="subtitle"></p>
+        
+        <div id="loadingMessage" class="loading">
+            Loading financial data...
+        </div>
+
+        <div id="noData" class="no-data" style="display: none;">
+            Please wait while financial data loads...
+        </div>
+
+        <div class="stats">
+            <h5>Sample fwd pe</h5>
+            <p id="spy_stats"></p>
+            <p id="qqq_stats"></p>
+            <p id="dow_stats"></p>
+        </div>
+        <div class="filter-buttons" id="filterButtons" style="display: none;">
+            <button id="allBtn" class="filter-btn active" onclick="filterStocks('all')">All Stocks</button>
+            <button id="spyBtn" class="filter-btn" onclick="filterStocks('spy')">SPY</button>
+            <button id="qqqBtn" class="filter-btn" onclick="filterStocks('qqq')">QQQ</button>
+            <button id="dowBtn" class="filter-btn" onclick="filterStocks('dow')">DOW</button>
+        </div>
+
+        <table id="dataTable">
+            <thead>
+                <tr>
+                    <th class="sortable" data-sort="symbol">Stock</th>
+                    <th class="sortable right-align" data-sort="price">Price</th>
+                    <th class="right-align">LY(a) EPS</th>
+                    <th class="right-align">CY(e) EPS</th>
+                    <th class="right-align">Fwd EPS</th>
+                    <th class="sortable right-align" data-sort="pe">Fwd P/E</th>
+                    <th class="weight-column sortable right-align" data-sort="weight" id="weightHeader">Weight</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody">
+            </tbody>
+        </table>
+
+        <footer>
+            <a href="./vol_pages/DIA_vol.html">DIA vol heatmap</a>
+            <a href="./vol_pages/QQQ_vol.html">QQQ vol heatmap</a>
+            <a href="./vol_pages/META_vol.html">META vol heatmap</a>
+            <a href="./vol_pages/MSFT_vol.html">MSFT vol heatmap</a>
+            <a href="./vol_pages/BRK-B_vol.html">BRK-B vol heatmap</a>
+            <a href="./vol_pages/GS_vol.html">GS vol heatmap</a>
+            <a href="./vol_pages/UNH_vol.html">UNH vol heatmap</a>
+        </footer>
+    </div>
+
+    <script>
+        let currentData = {};
+        let allData = {};
+        let currentSort = { column: null, direction: 'asc' };
+        let currentFilter = 'all';
+
+        const filters = {
+            spy: ["AAPL", "MSFT", "AMZN", "GOOGL", "META", "TSLA", "NVDA", "BRK.B", "UNH", "JNJ", "XOM", "V", "JPM", "PG", "HD", "MA", "CVX", "LLY", "MRK", "PEP", "ABBV", "KO", "AVGO", "COST", "TMO", "WMT"],
+            qqq: ["AAPL", "NVDA", "MSFT", "GOOGL", "META", "TSLA", "AMZN", "AVGO", "NFLX", "COST", "PLTR"],
+            dow: ["GS", "MSFT", "HD", "V", "SHW", "UNH", "CAT", "SHW", "AXP", "JPM", "MCD", "TRV", "WMT", "DIS", "IBM", "MMM", "NKE", "KO", "NVDA", "CVX", "BA", "JNJ", "PG", "AAPL", "AMZN", "CRM", "VZ"]
+        };
+
+        function filterStocks(filterStr) {
+            currentFilter = filterStr;
+            // Update button states
+            document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(filterStr + 'Btn').classList.add('active');
+
+            // Show/hide weight column and update header
+            const table = document.getElementById('dataTable');
+            const weightHeader = document.getElementById('weightHeader');
+
+            if (filterStr === 'all') {
+                table.classList.remove('show-weight');
+                currentData = allData;
+            } else {
+                table.classList.add('show-weight');
+                // Update weight column header based on filter
+                if (filterStr === 'qqq') {
+                    weightHeader.textContent = 'QQQ weight';
+                } else if (filterStr === 'dow') {
+                    weightHeader.textContent = 'DOW weight';
+                } else {
+                    weightHeader.textContent = 'SPY Weight';
+                }
+
+                const filterList = filters[filterStr];
+                currentData = {};
+                filterList.forEach(symbol => {
+                    const upperSymbol = symbol.toUpperCase();
+                    if (allData[upperSymbol]) {
+                        currentData[upperSymbol] = allData[upperSymbol];
+                    }
+                });
+            }
+            // Reset sort and populate table
+            populateTable(currentData, true);
+        }
+
+        // Load JSON data from imported script
+        function loadJSONData() {
+            try {
+                if (typeof financialData !== 'undefined') {
+                    currentData = financialData;
+                    allData = financialData;
+
+                    populateTable(allData);
+                    document.getElementById('filterButtons').style.display = 'block';
+                    document.getElementById('spy_stats')
+                        .innerHTML = `SPY (${allData.metadata.spy_sample_weight}) w.avg. ${allData.metadata.spy_wafpe}, med ${allData.metadata.spy_median_pe}`;
+                    document.getElementById('qqq_stats')
+                        .innerHTML = `QQQ (${allData.metadata.qqq_sample_weight}) w.avg. ${allData.metadata.qqq_wafpe}, med ${allData.metadata.qqq_median_pe}`;
+                    document.getElementById('dow_stats')
+                        .innerHTML = `DIA (${allData.metadata.dow_sample_weight}) w.avg. ${allData.metadata.dow_wafpe}, med ${allData.metadata.dow_median_pe}`;
+                    document.getElementById('subtitle')
+                        .innerHTML = `As of close ${allData.metadata.date}`
+                } else {
+                    throw new Error('Financial data not found. Make sure latest.js is properly loaded.');
+                }
+            } catch (error) {
+                console.error('Error loading JSON data:', error);
+                document.getElementById('loadingMessage').style.display = 'none';
+                document.getElementById('noData').innerHTML = 'Error loading data from ./direct/archive/latest.js<br>Make sure the file exists and contains: var financialData = { ... };';
+                document.getElementById('noData').style.display = 'block';
+            }
+        }
+
+        // Add click listeners to sortable headers
+        document.querySelectorAll('th.sortable').forEach(header => {
+            header.addEventListener('click', () => {
+                const sortColumn = header.dataset.sort;
+                sortTable(sortColumn);
+            });
+        });
+
+        function sortTable(column) {
+            // Determine sort direction
+            if (currentSort.column === column) {
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort.column = column;
+                currentSort.direction = 'asc';
+            }
+
+            // Update header indicators
+            document.querySelectorAll('th').forEach(th => {
+                th.classList.remove('sort-asc', 'sort-desc');
+            });
+            
+            const currentHeader = document.querySelector(`th[data-sort="${column}"]`);
+            currentHeader.classList.add(currentSort.direction === 'asc' ? 'sort-asc' : 'sort-desc');
+
+            const weightKeyTable = {
+                spy: 'spy_weight',
+                qqq: 'qqq_weight',
+                dow: 'dow_weight'
+            }
+            // Sort the data
+            const entries = Object.entries(currentData);
+            entries.sort((a, b) => {
+                let valueA, valueB;
+
+                switch(column) {
+                    case 'symbol':
+                        valueA = a[0];
+                        valueB = b[0];
+                        break;
+                    case 'price':
+                        valueA = a[1].price;
+                        valueB = b[1].price;
+                        break;
+                    case 'pe':
+                        valueA = a[1].fwd_pe;
+                        valueB = b[1].fwd_pe;
+                        break;
+                    case 'weight':
+                        const weightKey = weightKeyTable[currentFilter] || 'spy_weight';
+                        valueA = a[1][weightKey] ? parseFloat(a[1][weightKey].replace('%', '')) : 0;
+                        valueB = b[1][weightKey] ? parseFloat(b[1][weightKey].replace('%', '')) : 0;
+                        break;
+                }
+
+                if (typeof valueA === 'string') {
+                    return currentSort.direction === 'asc' 
+                        ? valueA.localeCompare(valueB)
+                        : valueB.localeCompare(valueA);
+                } else {
+                    return currentSort.direction === 'asc' 
+                        ? valueA - valueB
+                        : valueB - valueA;
+                }
+            });
+
+            // Rebuild table with sorted data
+            const sortedData = {};
+            entries.forEach(([symbol, data]) => {
+                sortedData[symbol] = data;
+            });
+            
+            populateTable(sortedData, false);
+        }
+
+        function populateTable(data, resetSort = true) {
+            const tableBody = document.getElementById('tableBody');
+            tableBody.innerHTML = '';
+
+            // Reset sort indicators if this is initial load
+            if (resetSort) {
+                currentSort = { column: null, direction: 'asc' };
+                document.querySelectorAll('th').forEach(th => {
+                    th.classList.remove('sort-asc', 'sort-desc');
+                });
+            }
+
+            // Convert data to array - keep original order if already sorted
+            const entries = resetSort 
+                ? Object.entries(data).sort((a, b) => a[0].localeCompare(b[0]))
+                : Object.entries(data);
+
+            entries.forEach(([symbol, stockData]) => {
+                // Skip metadata entry
+                if (symbol == 'metadata') { return }
+
+                const row = document.createElement('tr');
+                row.className = 'fade-in';
+                const target = `https://finance.yahoo.com/quote/${symbol}/analysis/`;
+
+                // Get weight based on current filter
+                let weight = '';
+                if (currentFilter === 'qqq' && stockData.qqq_weight) {
+                    weight = stockData.qqq_weight;
+                } else if (currentFilter === 'dow' && stockData.dow_weight) {
+                    weight = stockData.dow_weight;
+                } else {
+                    weight = stockData.spy_weight;
+                }
+
+                row.innerHTML = `
+                    <td class="symbol"><a href=${target} target="_blank">${symbol}</a></td>
+                    <td class="price right-align">${stockData.price.toFixed(2)}</td>
+                    <td class="eps right-align">${stockData.eps_recentFY.toFixed(2)}</td>
+                    <td class="eps right-align">${stockData.fwd_eps_curFY.toFixed(2)}</td>
+                    <td class="eps right-align">${stockData.fwd_eps.toFixed(2)}</td>
+                    <td class="pe right-align">${stockData.fwd_pe.toFixed(1)}</td>
+                    <td class="weight-column right-align">${weight}</td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+
+            // Hide loading and show table
+            document.getElementById('loadingMessage').style.display = 'none';
+            document.getElementById('noData').style.display = 'none';
+            document.getElementById('dataTable').style.display = 'table';
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            loadJSONData();
+        });
+    </script>
+</body>
+</html>
