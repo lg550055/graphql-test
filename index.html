@@ -67,11 +67,16 @@
         let currentSort = { column: null, direction: 'asc' };
         let currentFilter = 'all';
 
-        const filters = {
-            spy: ["AAPL", "MSFT", "AMZN", "GOOGL", "META", "TSLA", "NVDA", "BRK.B", "UNH", "JNJ", "XOM", "V", "JPM", "PG", "HD", "MA", "CVX", "LLY", "MRK", "PEP", "ABBV", "KO", "AVGO", "COST", "TMO", "WMT"],
-            qqq: ["AAPL", "NVDA", "MSFT", "GOOGL", "META", "TSLA", "AMZN", "AVGO", "NFLX", "COST", "PLTR"],
-            dow: ["GS", "MSFT", "HD", "V", "SHW", "UNH", "CAT", "SHW", "AXP", "JPM", "MCD", "TRV", "WMT", "DIS", "IBM", "MMM", "NKE", "KO", "NVDA", "CVX", "BA", "JNJ", "PG", "AAPL", "AMZN", "CRM", "VZ"]
-        };
+        function getFilterList(filterStr) {
+            if (!allData || filterStr === 'all') {
+                return [];
+            }
+
+            const weightKey = `${filterStr}_weight`;
+            return Object.keys(allData)
+                .filter(symbol => symbol !== 'metadata')
+                .filter(symbol => !!allData[symbol][weightKey]);
+        }
 
         function filterStocks(filterStr) {
             currentFilter = filterStr;
@@ -97,12 +102,11 @@
                     weightHeader.textContent = 'SPY Weight';
                 }
 
-                const filterList = filters[filterStr];
+                const filterList = getFilterList(filterStr);
                 currentData = {};
                 filterList.forEach(symbol => {
-                    const upperSymbol = symbol.toUpperCase();
-                    if (allData[upperSymbol]) {
-                        currentData[upperSymbol] = allData[upperSymbol];
+                    if (allData[symbol]) {
+                        currentData[symbol] = allData[symbol];
                     }
                 });
             }
